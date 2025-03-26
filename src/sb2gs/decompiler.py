@@ -4,6 +4,7 @@ import contextlib
 import json
 import re
 import string
+import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TextIO
 
@@ -14,7 +15,7 @@ from .sb3 import Input, Target
 if TYPE_CHECKING:
     from .sb3 import Block
 
-pcode = re.compile(r"%[bs]")
+pcode = re.compile(r"(?:%[bs]\s*)+")
 
 
 def get_name(name: str):
@@ -546,7 +547,8 @@ class Blocks:
 
     def procedures_definition(self, block: Block):
         custom = self.blocks[block.inputs["custom_block"][1]]
-        name = pcode.split(custom.mutation.proccode)[0]
+        name = [i for i in pcode.split(custom.mutation.proccode)][0].strip() or f"UNNAMED {random.randrange(1 << 32)}"
+        print(name)
         if custom.mutation.warp != "true":
             self.tabwrite("nowarp proc ")
         else:
@@ -559,7 +561,7 @@ class Blocks:
         self.stack(block.next)
 
     def procedures_call(self, block: Block):
-        name = pcode.split(block.mutation.proccode)[0]
+        name = [i for i in pcode.split(block.mutation.proccode)][0].strip() or f"UNNAMED {random.randrange(1 << 32)}"
         args = json.loads(block.mutation.argumentids)
         self.tabwrite(get_name(name) + (" " if block.inputs else ""))
         for index, arg_id in enumerate(args):
