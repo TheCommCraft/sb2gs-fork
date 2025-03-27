@@ -27,6 +27,8 @@ def get_name(name: str):
     name = name.replace("$", "_PHP_")
     if name[0] in string.digits:
         name = "z" + name
+    if name == "length":
+        name = "_length"
     return "".join(i for i in name if i in string.ascii_letters + string.digits + "_")
 
 
@@ -80,6 +82,8 @@ class Blocks:
         self.blocks = target.blocks
         self.file = file
         self.level = 0
+        self.vars: set[str] = set()
+        self.lists: set[str] = set()
 
     def write(self, string: str):
         self.file.write(string)
@@ -99,13 +103,20 @@ class Blocks:
         self.level += 1
         for i, variable in enumerate(self.target.variables._.items()):
             self.tabwrite(get_name(variable[1][0]))
-            self.write(" = 0;\n")
+            self.vars.add(get_name(variable[1][0]))
+            self.write(" = {};\n".format(str(variable[1][1])))
         self.level -= 1
         self.tabwrite("}\n")
 
         for i, lst in enumerate(self.target.lists._.items()):
             self.tabwrite("list ")
-            self.write(get_name(lst[1][0]))
+            if get_name(lst[1][0]) in self.vars:
+                self.write(get_name(lst[1][0]+"__list"))
+                self.lists.add(get_name(lst[1][0]+"__list"))
+            else:
+                self.write(get_name(lst[1][0]))
+                self.lists.add(get_name(lst[1][0]))
+            self.write(" = python ```\nprint({})\n```".format(repr("\n".join(str(i) for i in lst[1][1]))))
             self.write(";\n")
 
         self.tabwrite("costumes ")
@@ -548,7 +559,8 @@ class Blocks:
     def procedures_definition(self, block: Block):
         custom = self.blocks[block.inputs["custom_block"][1]]
         name = [i for i in pcode.split(custom.mutation.proccode)][0].strip() or f"UNNAMED {random.randrange(1 << 32)}"
-        print(name)
+        if get_name(name) in self.vars or get_name(name) in self.lists:
+            name += "__proc"
         if custom.mutation.warp != "true":
             self.tabwrite("nowarp proc ")
         else:
@@ -562,6 +574,8 @@ class Blocks:
 
     def procedures_call(self, block: Block):
         name = [i for i in pcode.split(block.mutation.proccode)][0].strip() or f"UNNAMED {random.randrange(1 << 32)}"
+        if get_name(name) in self.vars or get_name(name) in self.lists:
+            name += "__proc"
         args = json.loads(block.mutation.argumentids)
         self.tabwrite(get_name(name) + (" " if block.inputs else ""))
         for index, arg_id in enumerate(args):
