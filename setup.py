@@ -6,7 +6,7 @@ with open("README.md", encoding="utf-8") as f:
 VERSION = '0.1.1'
 
 setup(
-    name='sb2gs',
+    name='sb2gs-fork',
     version=VERSION,
     author='Simon Gilde',
     author_email='tcc@thecommcraft.de',
