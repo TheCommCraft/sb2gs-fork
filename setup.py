@@ -8,8 +8,8 @@ VERSION = '0.1.1'
 setup(
     name='sb2gs-fork',
     version=VERSION,
-    author='Simon Gilde',
-    author_email='tcc@thecommcraft.de',
+    author='aspizu',
+    author_email='aspizu@protonmail.com',
     description='all credits go to aspizu on github',
     long_description=long_description,
     long_description_content_type='text/markdown',
